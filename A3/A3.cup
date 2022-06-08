@@ -1,0 +1,38 @@
+import java.io.*;
+/* Terminals (tokens returned by the scanner). */
+terminal String RETURN, WRITE, IF, READ, ELSE, BEGIN, END, MAIN, ID, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, SEMI, QSTRING, NUM, EQUAL, NEQUAL, ASSIGN, INT, REAL, STRING, COMMA;
+/* Non terminals */
+non terminal Integer expr, program, RESULT;
+non terminal String methodDecl,type,block,statement,statements,localVarDecl,assignStmt,returnStmt,ifStmt,writeStmt,readStmt,multiplicativeExpr,primaryExpr, primaryExprs,formalParams,extraParams,formalParam,actualParams,boolExpr,addSubtract,multiplyDivide, expression, parameterList, optionalParameterList, multiplicativeExprs;
+/* Precedences */
+precedence left PLUS, MINUS, ELSE;
+precedence left TIMES, DIVIDE;
+
+/* The grammar */
+program ::= methodDecl {: RESULT = 1;:} | methodDecl program:e {:RESULT = e + 1;:};
+expr ::= multiplicativeExpr PLUS multiplicativeExpr {: :} | multiplicativeExpr MINUS multiplicativeExpr {: :};
+addSubtract ::= PLUS {::} | MINUS {::};
+multiplyDivide ::= TIMES {::} | DIVIDE {::};
+methodDecl ::= type MAIN ID LPAREN formalParams RPAREN block {::} | type ID LPAREN formalParams RPAREN block {::} ;
+block ::=  BEGIN statements END {::};
+type ::= INT {::} | REAL {::} | STRING {::};
+statements ::= statement statements {::} | statement {::};
+statement ::= block | localVarDecl | returnStmt| assignStmt | readStmt | ifStmt | writeStmt {::};
+localVarDecl ::= type ID SEMI {::} | type assignStmt {::};
+assignStmt ::= ID ASSIGN expression SEMI{::} | ID ASSIGN QSTRING SEMI{::};
+returnStmt ::= RETURN expression SEMI {::};
+ifStmt ::= IF LPAREN boolExpr RPAREN statement {::} | IF LPAREN boolExpr RPAREN statement ELSE statement {::};
+writeStmt ::= WRITE LPAREN expression COMMA QSTRING RPAREN SEMI {::};
+readStmt ::= READ LPAREN ID COMMA QSTRING RPAREN SEMI {::};
+expression ::= multiplicativeExpr {::} | multiplicativeExpr multiplicativeExprs;
+multiplicativeExprs ::= addSubtract multiplicativeExpr multiplicativeExprs|addSubtract multiplicativeExpr;
+multiplicativeExpr ::= primaryExpr {::} | primaryExpr primaryExprs {::};
+primaryExprs ::= multiplyDivide primaryExpr primaryExprs {::}| multiplyDivide primaryExpr {::};
+primaryExpr ::= NUM {::} | ID {::} | LPAREN expression RPAREN | ID LPAREN actualParams RPAREN {::};
+boolExpr ::= expression EQUAL expression {::} | expression NEQUAL expression {::};
+actualParams ::= expression {::} | expression COMMA expression {::};
+formalParams ::= formalParam extraParams {::} | {::};
+formalParam ::= type ID {::};
+extraParams ::= COMMA formalParam extraParams {::} | {::};
+optionalParameterList::= parameterList | ;
+parameterList::= parameterList COMMA actualParams|actualParams;

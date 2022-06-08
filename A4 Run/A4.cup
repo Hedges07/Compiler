@@ -1,0 +1,37 @@
+import java.io.*;
+/* Terminals (tokens returned by the scanner). */
+terminal String RETURN, WRITE, IF, READ, ELSE, BEGIN, END, MAIN, ID, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, SEMI, QSTRING, NUM, EQUAL, NEQUAL, ASSIGN, INT, REAL, STRING, COMMA, TRUE, FALSE;
+/* Non terminals */
+non terminal String program2,program,addSubtract,multiplyDivide,methodDecl,block,type,statements,statement,localVarDecl,assignStmt,returnStmt,ifStmt,writeStmt,readStmt,expression,multiplicativeExprs,multiplicativeExpr,primaryExprs,primaryExpr, boolExpr,actualParams,formalParams,formalParam,extraParams,optionalParameterList,parameterList;
+/* Precedences */
+precedence left PLUS, MINUS, ELSE;
+precedence left TIMES, DIVIDE;
+
+/* The grammar */
+program2 ::= program:e1 {:RESULT = "import java.lang.*;\n" + "import java.io.*;\n" + "public class A4 {" + "\n" + "static BufferedReader _br;" + "\n" + e1 + "}";:};
+program ::= methodDecl:e1 {:RESULT = e1;:} | methodDecl:e1 program:e2 {:RESULT = e1 + e2;:};
+addSubtract ::= PLUS {:RESULT = "+";:}| MINUS {:RESULT = "-";:};
+multiplyDivide ::= TIMES {:RESULT = "*";:}| DIVIDE {:RESULT = "/";:};
+methodDecl ::= type MAIN ID LPAREN formalParams RPAREN block:e1 {:RESULT = "public static void main(String args[]) throws Exception" + e1;:}| type:e1 ID:e2 LPAREN formalParams:e3 RPAREN block:e4 {:RESULT = "static " + e1 + " " + e2 + "(" + e3 + ")" +"throws Exception "+ e4;:};
+block ::=  BEGIN statements:e1 END {:RESULT = "{\n"+e1+"}\n";:};
+type ::= INT {:RESULT = "int";:} | REAL {:RESULT = "double";:} | STRING {:RESULT = "String";:};
+statements ::= statement:e1 statements:e2 {:RESULT = e1+e2;:} | statement:e1 {:RESULT = e1;:};
+statement ::= block:e1 {:RESULT = e1;:} | localVarDecl:e1 {:RESULT = e1;:} | returnStmt:e1 {:RESULT = e1;:} | assignStmt:e1 {:RESULT = e1;:} | readStmt:e1 {:RESULT = e1;:} | ifStmt:e1 {:RESULT = e1;:} | writeStmt:e1 {:RESULT = e1;:};
+localVarDecl ::= type:e1 ID:e2 SEMI {:RESULT = e1 + " " + e2 + ";\n";:} | type:e1 assignStmt:e2 {:RESULT = e1 + " " + e2 + ";\n";:};
+assignStmt ::= ID:e1 ASSIGN expression:e2 SEMI {:RESULT = e1 + "=" + e2 + ";\n";:} | ID:e1 ASSIGN QSTRING:e2 SEMI {:RESULT = e1 + "=" + e2 + ";\n";:};
+returnStmt ::= RETURN expression:e1 SEMI {:RESULT = "return " + e1 +";\n";:};
+ifStmt ::= IF LPAREN boolExpr:e1 RPAREN statement:e2 {:RESULT = "if (" + e1 + ")" + e2;:} | IF LPAREN boolExpr:e1 RPAREN statement:e2 ELSE statement:e3 {:RESULT = "if (" + e1 + ")" + e2 + "\n" +"else" + "\n" + e3 + "\n";:};
+writeStmt ::= WRITE LPAREN expression:e1 COMMA QSTRING:e2 RPAREN SEMI {:RESULT = "FileWriter fileWriter = new FileWriter("+e2+");" + "\n" + "PrintWriter printWriter = new PrintWriter(fileWriter);" + "\n" + "printWriter.print("+e1+");" + "\n" + "printWriter.close();" + "\n";:};
+readStmt ::= READ LPAREN ID:e1 COMMA QSTRING:e2 RPAREN SEMI {:RESULT = "_br = new BufferedReader(new FileReader("+e2+"));" + "\n"+ e1 + " = new Integer(_br.readLine()).intValue();" + "\n";:};
+expression ::= multiplicativeExpr:e1 {:RESULT = e1;:} | multiplicativeExpr:e1 multiplicativeExprs:e2 {:RESULT = e1 + e2;:} | {:RESULT = " ";:};
+multiplicativeExprs ::= addSubtract:e1 multiplicativeExpr:e2 multiplicativeExprs:e3 {:RESULT = e1 + e2 + e3;:} | addSubtract:e1 multiplicativeExpr:e2 {:RESULT = e1 + e2;:};
+multiplicativeExpr ::= primaryExpr:e1 {:RESULT = e1;:} | primaryExpr:e1 primaryExprs:e2 {:RESULT = e1 + e2;:};
+primaryExprs ::= multiplyDivide:e1 primaryExpr:e2 primaryExprs:e3 {:RESULT = e1 + e2 + e3;:}| multiplyDivide:e1 primaryExpr:e2 {:RESULT = e1 + e2;:};
+primaryExpr ::= NUM:e1 {:RESULT = e1;:} | ID:e1 {:RESULT = e1;:} | LPAREN expression:e1 RPAREN {:RESULT = "(" + e1 + ")" ;:}| ID:e1 LPAREN actualParams:e2 RPAREN {:RESULT = e1 + "(" + e2 + ")" ;:};
+boolExpr ::= expression:e1 EQUAL expression:e2 {:RESULT = e1 + "==" + e2;:} | expression:e1 NEQUAL expression:e2 {:RESULT = e1 + "!=" + e2;:} | TRUE {:RESULT = "true";:} | FALSE {:RESULT = "false";:};
+actualParams ::= expression:e {:RESULT = e;:} | expression:e1 COMMA expression:e2 {:RESULT = e1 + " " + "," +  " " + e2;:};
+formalParams ::= formalParam:e1 extraParams:e2 {:RESULT = e1 + " " + e2;:} | {:RESULT = " ";:};
+formalParam ::= type:e1 ID:e2 {:RESULT = e1 +" "+ e2;:};
+extraParams ::= COMMA formalParam:e1 extraParams:e2 {:RESULT = "," + " " + e1 + " " + e2;:}| {:RESULT  = "";:};
+optionalParameterList::= parameterList:e1 {:RESULT = e1;:} | {:RESULT = " ";:};
+parameterList::= parameterList:e1 COMMA actualParams:e2 {:RESULT = e1 + "," + e2;:}|actualParams:e1 {:RESULT = e1;:};

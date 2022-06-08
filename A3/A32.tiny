@@ -1,0 +1,6 @@
+/** incorrect program. method head required.
+**/
+
+BEGIN 
+REAL x;
+END
